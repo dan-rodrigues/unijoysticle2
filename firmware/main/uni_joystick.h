@@ -41,6 +41,10 @@ typedef struct {
   uint8_t _ground;    // line 8 - ground. added as ref only
   uint8_t pot_x;      // line 9 - Right button for mouse
   uint8_t auto_fire;  // virtual button
+
+  // Additional buttons from SNES pad
+  uint8_t a, b, x, y;
+  uint8_t l, r, start, select;
 } uni_joystick_t;
 
 #endif  // UNI_JOYSTICK_H

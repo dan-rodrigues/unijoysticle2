@@ -68,6 +68,18 @@ static void to_single_joy(const uni_gamepad_t* gp, uni_joystick_t* out_joy) {
   if (gp->updated_states & GAMEPAD_STATE_ACCELERATOR) {
     out_joy->pot_y = (gp->accelerator >> 2);  // convert from 1024 to 256
   }
+
+  // SNES pad specific:
+  
+  out_joy->b = (gp->buttons & (1 << 0)) != 0;
+  out_joy->a = (gp->buttons & (1 << 1)) != 0;
+  out_joy->y = (gp->buttons & (1 << 2)) != 0;
+  out_joy->x = (gp->buttons & (1 << 3)) != 0;
+  out_joy->l = (gp->buttons & (1 << 4)) != 0;
+  out_joy->r = (gp->buttons & (1 << 5)) != 0;
+
+  out_joy->select = (gp->misc_buttons & (1 << 2)) != 0;
+  out_joy->start = (gp->misc_buttons & (1 << 3)) != 0;
 }
 
 void uni_gamepad_to_single_joy(const uni_gamepad_t* gp,
@@ -76,9 +88,9 @@ void uni_gamepad_to_single_joy(const uni_gamepad_t* gp,
 
 #if UNIJOYSTICLE_SINGLE_PORT == 0
   // Buttom B is "jump"
-  if (gp->updated_states & GAMEPAD_STATE_BUTTON_B) {
-    out_joy->up |= ((gp->buttons & BUTTON_B) != 0);
-  }
+//  if (gp->updated_states & GAMEPAD_STATE_BUTTON_B) {
+//    out_joy->up |= ((gp->buttons & BUTTON_B) != 0);
+//  }
 #else   // UNIJOYSTICLE_SINGLE_PORT == 1
   if (gp->updated_states & GAMEPAD_STATE_BUTTON_B) {
     out_joy->pot_y |= ((gp->buttons & BUTTON_B) != 0);
