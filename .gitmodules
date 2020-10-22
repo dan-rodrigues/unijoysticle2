@@ -1,0 +1,3 @@
+[submodule "firmware/btstack"]
+	path = firmware/btstack
+	url = https://github.com/bluekitchen/btstack
