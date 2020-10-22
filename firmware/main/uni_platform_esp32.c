@@ -29,6 +29,7 @@
 #include "uni_hid_device.h"
 #include "uni_platform.h"
 
+// Temporarily for this file only
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunused-const-variable="
 
@@ -71,27 +72,8 @@ static uint8_t g_autofire_b_enabled = 0;
 
 // --- Code
 
-// Interrupt handlers
-static void handle_event_mouse();
-static void handle_event_pot();
-static void handle_event_button();
-
 // Mouse related
 static void joy_update_port(uni_joystick_t* joy, const gpio_num_t* gpios);
-static void mouse_send_move(int pin_a, int pin_b, uint32_t delay);
-static void mouse_move_x(int dir, uint32_t delay);
-static void mouse_move_y(int dir, uint32_t delay);
-
-static void delay_us(uint32_t delay);
-
-// GPIO Interrupt handlers
-static void IRAM_ATTR gpio_isr_handler_button(void* arg);
-#if UNI_ENABLE_POT
-static void IRAM_ATTR gpio_isr_handler_pot(void* arg);
-#endif  // UNI_ENABLE_POT
-
-static void event_loop(void* arg);
-static void auto_fire_loop(void* arg);
 
 #define MAX(a, b)           \
 ({                        \
@@ -163,59 +145,7 @@ static void joy_update_port(uni_joystick_t* joy, const gpio_num_t* gpios) {
 }
 
 // Mouse handler
-void handle_event_mouse() {
-  // Copy global variables to local, in case they changed.
-  int delta_x = g_delta_x;
-  int delta_y = g_delta_y;
-
-  // Should not happen, but better safe than sorry
-  if (delta_x == 0 && delta_y == 0) return;
-
-  int dir_x = 0;
-  int dir_y = 0;
-  float a = atan2f(delta_y, delta_x) + M_PI;
-  float d = a * (180.0 / M_PI);
-  logd("x=%d, y=%d, r=%f, d=%f\n", delta_x, delta_y, a, d);
-
-  if (d < 60 || d >= 300) {
-    // Moving left? (a<60, a>=300)
-    dir_x = -1;
-  } else if (d > 120 && d <= 240) {
-    // Moving right? (120 < a <= 240)
-    dir_x = 1;
-  }
-
-  if (d > 30 && d <= 150) {
-    // Moving down? (30 < a <= 150)
-    dir_y = -1;
-  } else if (d > 210 && d <= 330) {
-    // Moving up?
-    dir_y = 1;
-  }
-
-  int delay = MOUSE_DELAY_BETWEEN_EVENT_US - (abs(delta_x) + abs(delta_y)) * 3;
-
-  if (dir_y != 0) {
-    mouse_move_y(dir_y, delay);
-  }
-  if (dir_x != 0) {
-    mouse_move_x(dir_x, delay);
-  }
-}
-
-static void mouse_send_move(int pin_a, int pin_b, uint32_t delay) {}
-static void mouse_move_x(int dir, uint32_t delay) {}
-static void mouse_move_y(int dir, uint32_t delay) {}
-
-// Delay in microseconds. Anything bigger than 1000 microseconds (1 millisecond)
-// should be scheduled using vTaskDelay(), which will allow context-switch and
-// allow other tasks to run.
-static void delay_us(uint32_t delay) {
-  if (delay > 1000)
-    vTaskDelay(delay / 1000);
-  else
-    ets_delay_us(delay);
-}
+void handle_event_mouse() {}
 
 // SPI write of gamepad state to FPGA
 
