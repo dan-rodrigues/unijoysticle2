@@ -37,11 +37,12 @@
 
 // GPIO for SPI interface
 
-static const gpio_num_t GPIO_SPI_CSN = GPIO_NUM_5;
+static const gpio_num_t GPIO_LED = GPIO_NUM_5;
+
+static const gpio_num_t GPIO_SPI_CSN = GPIO_NUM_2;
 static const gpio_num_t GPIO_SPI_CLK = GPIO_NUM_16;
 static const gpio_num_t GPIO_SPI_MOSI = GPIO_NUM_4;
 static const gpio_num_t GPIO_SPI_MISO = GPIO_NUM_12;
-static const gpio_num_t GPIO_SPI_WRITE_EN = GPIO_NUM_2;
 
 static void spi_write_gamepad_state(const uni_joystick_t* joy);
 
@@ -101,17 +102,20 @@ void uni_platform_init(int argc, const char** argv) {
   // GPIO configuration for SPI
 
   io_conf.pin_bit_mask = (
-    1 << GPIO_SPI_CSN | 1 << GPIO_SPI_CLK | 1 << GPIO_SPI_MOSI | 1 << GPIO_SPI_WRITE_EN
+    1 << GPIO_SPI_CSN | 1 << GPIO_SPI_CLK | 1 << GPIO_SPI_MOSI |
+    1 << GPIO_LED
   );
 
   ESP_ERROR_CHECK(gpio_config(&io_conf));
   gpio_set_level(GPIO_SPI_CSN, 1);
 
-  // (set LED?)
+  // LED set until config complete
+  gpio_set_level(GPIO_LED, 1);
 }
 
 void uni_platform_on_init_complete() {
-  // (clear LED?)
+  // LED clear when config complete
+  gpio_set_level(GPIO_LED, 0);
 }
 
 void uni_platform_on_port_assign_changed(uni_joystick_port_t port) {
@@ -164,7 +168,6 @@ static void spi_write_gamepad_state(const uni_joystick_t* joy) {
   pad_bits = (pad_bits << 1) | joy->r;
 
   gpio_set_level(GPIO_SPI_CLK, 0);
-  gpio_set_level(GPIO_SPI_WRITE_EN, 1);
   gpio_set_level(GPIO_SPI_CSN, 0);
 
   for (uint32_t i = 0; i < 8; i++) {
