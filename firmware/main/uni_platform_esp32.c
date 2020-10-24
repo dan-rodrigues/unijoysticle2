@@ -29,10 +29,6 @@
 #include "uni_hid_device.h"
 #include "uni_platform.h"
 
-// Temporarily for this file only
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wunused-const-variable="
-
 // --- Consts
 
 // GPIO for SPI interface
@@ -42,16 +38,8 @@ static const gpio_num_t GPIO_LED = GPIO_NUM_5;
 static const gpio_num_t GPIO_SPI_CSN = GPIO_NUM_2;
 static const gpio_num_t GPIO_SPI_CLK = GPIO_NUM_16;
 static const gpio_num_t GPIO_SPI_MOSI = GPIO_NUM_4;
-static const gpio_num_t GPIO_SPI_MISO = GPIO_NUM_12;
 
 static void spi_write_gamepad_state(const uni_joystick_t* joy);
-
-// 20 milliseconds ~= 1 frame in PAL
-// 17 milliseconds ~= 1 frame in NTSC
-static const int AUTOFIRE_FREQ_MS = 20 * 4;  // change every ~4 frames
-
-static const int MOUSE_DELAY_BETWEEN_EVENT_US = 1200;  // microseconds
-// static const int MOUSE_MAX_DELTA = 32;
 
 // --- Globals
 
@@ -66,7 +54,6 @@ enum {
 
 // --- Code
 
-// Mouse related
 static void joy_update_port(uni_joystick_t* joy, const gpio_num_t* gpios);
 
 #define MAX(a, b)           \
@@ -145,7 +132,8 @@ static void led_event_loop(void* arg) {
 }
 
 void uni_platform_on_port_assign_changed(uni_joystick_port_t port) {
-  bool port_status_a = ((port & JOYSTICK_PORT_A) != 0);
+  // Port A unused now
+  // bool port_status_a = ((port & JOYSTICK_PORT_A) != 0);
   bool port_status_b = ((port & JOYSTICK_PORT_B) != 0);
 
   // LED update based on (un)connected state
