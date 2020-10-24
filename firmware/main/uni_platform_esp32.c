@@ -55,21 +55,14 @@ static const int MOUSE_DELAY_BETWEEN_EVENT_US = 1200;  // microseconds
 
 // --- Globals
 
-static int64_t g_last_time_pressed_us = 0;  // in microseconds
-static EventGroupHandle_t g_event_group;
-static EventGroupHandle_t g_auto_fire_group;
+static EventGroupHandle_t g_led_event_group;
+static void led_event_loop(void* arg);
 
-// Mouse "shared data from main task to mouse task.
-static int32_t g_delta_x = 0;
-static int32_t g_delta_y = 0;
-
-// Pot "shared data from main task to pot task.
-static uint8_t g_pot_x = 0;
-static uint8_t g_pot_y = 0;
-
-// Autofire
-static uint8_t g_autofire_a_enabled = 0;
-static uint8_t g_autofire_b_enabled = 0;
+enum {
+  EVENT_BIT_CONNECTED = (1 << 0),
+  EVENT_BIT_INITIALIZING = (1 << 1),
+  EVENT_BIT_LED_TOGGLING = (1 << 2)
+};
 
 // --- Code
 
@@ -109,21 +102,58 @@ void uni_platform_init(int argc, const char** argv) {
   ESP_ERROR_CHECK(gpio_config(&io_conf));
   gpio_set_level(GPIO_SPI_CSN, 1);
 
+  // Event group for LED blinking when pad disconnected
+  g_led_event_group = xEventGroupCreate();
+
   // LED set until config complete
-  gpio_set_level(GPIO_LED, 1);
+  xEventGroupSetBits(g_led_event_group, EVENT_BIT_INITIALIZING);
+  xTaskCreate(led_event_loop, "led_event_loop", 2048, NULL, 10, NULL);
 }
 
 void uni_platform_on_init_complete() {
   // LED clear when config complete
-  gpio_set_level(GPIO_LED, 0);
+  xEventGroupClearBits(g_led_event_group, EVENT_BIT_INITIALIZING);
+}
+
+// Loop that is solely responsible for updating status LED
+
+static void led_event_loop(void* arg) {
+  const TickType_t delay_ticks = 250 / portTICK_PERIOD_MS;
+
+  while (true) {
+    EventBits_t event_bits = xEventGroupGetBits(g_led_event_group);
+
+    bool connected = event_bits & EVENT_BIT_CONNECTED;
+    bool initializing = event_bits & EVENT_BIT_INITIALIZING;
+
+    if (connected || initializing) {
+      gpio_set_level(GPIO_LED, 1);
+    } else {
+      // Flash while disconnected
+      bool led_on = (event_bits & EVENT_BIT_LED_TOGGLING) != 0;
+      gpio_set_level(GPIO_LED, led_on);
+
+      if (led_on) {
+        xEventGroupClearBits(g_led_event_group, EVENT_BIT_LED_TOGGLING);
+      } else {
+        xEventGroupSetBits(g_led_event_group, EVENT_BIT_LED_TOGGLING);
+      }
+    }
+
+    vTaskDelay(delay_ticks);
+  }
 }
 
 void uni_platform_on_port_assign_changed(uni_joystick_port_t port) {
   bool port_status_a = ((port & JOYSTICK_PORT_A) != 0);
   bool port_status_b = ((port & JOYSTICK_PORT_B) != 0);
+
   // LED update based on (un)connected state
-  // TODO: blink when unconnected, freetros task probably
-  gpio_set_level(GPIO_LED, port_status_b);
+  if (port_status_b) {
+    xEventGroupSetBits(g_led_event_group, EVENT_BIT_CONNECTED);
+  } else {
+    xEventGroupClearBits(g_led_event_group, EVENT_BIT_CONNECTED);
+  }
 }
 
 void uni_platform_on_mouse_data(int32_t delta_x, int32_t delta_y,
