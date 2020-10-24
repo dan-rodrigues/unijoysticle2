@@ -78,8 +78,8 @@ static void to_single_joy(const uni_gamepad_t* gp, uni_joystick_t* out_joy) {
   out_joy->l = (gp->buttons & (1 << 4)) != 0;
   out_joy->r = (gp->buttons & (1 << 5)) != 0;
 
-  out_joy->select = (gp->misc_buttons & (1 << 2)) != 0;
-  out_joy->start = (gp->misc_buttons & (1 << 3)) != 0;
+  out_joy->select = (gp->misc_buttons & (1 << 1)) != 0;
+  out_joy->start = (gp->misc_buttons & (1 << 2)) != 0;
 }
 
 void uni_gamepad_to_single_joy(const uni_gamepad_t* gp,

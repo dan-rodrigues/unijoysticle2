@@ -121,7 +121,9 @@ void uni_platform_on_init_complete() {
 void uni_platform_on_port_assign_changed(uni_joystick_port_t port) {
   bool port_status_a = ((port & JOYSTICK_PORT_A) != 0);
   bool port_status_b = ((port & JOYSTICK_PORT_B) != 0);
-  // TODO: LED update based on (un)connected state
+  // LED update based on (un)connected state
+  // TODO: blink when unconnected, freetros task probably
+  gpio_set_level(GPIO_LED, port_status_b);
 }
 
 void uni_platform_on_mouse_data(int32_t delta_x, int32_t delta_y,
@@ -155,22 +157,22 @@ void handle_event_mouse() {}
 
 static void spi_write_gamepad_state(const uni_joystick_t* joy) {
   uint16_t pad_bits = joy->b;
-  pad_bits = (pad_bits << 1) | joy->y;
-  pad_bits = (pad_bits << 1) | joy->select;
-  pad_bits = (pad_bits << 1) | joy->start;
-  pad_bits = (pad_bits << 1) | joy->up;
-  pad_bits = (pad_bits << 1) | joy->down;
-  pad_bits = (pad_bits << 1) | joy->left;
-  pad_bits = (pad_bits << 1) | joy->right;
-  pad_bits = (pad_bits << 1) | joy->a;
-  pad_bits = (pad_bits << 1) | joy->x;
-  pad_bits = (pad_bits << 1) | joy->l;
-  pad_bits = (pad_bits << 1) | joy->r;
+  pad_bits |= joy->y << 1;
+  pad_bits |= joy->select << 2;
+  pad_bits |= joy->start << 3;
+  pad_bits |= joy->up << 4;
+  pad_bits |= joy->down << 5;
+  pad_bits |= joy->left << 6;
+  pad_bits |= joy->right << 7;
+  pad_bits |= joy->a << 8;
+  pad_bits |= joy->x << 9;
+  pad_bits |= joy->l << 10;
+  pad_bits |= joy->r << 11;
 
   gpio_set_level(GPIO_SPI_CLK, 0);
   gpio_set_level(GPIO_SPI_CSN, 0);
 
-  for (uint32_t i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < 12; i++) {
     gpio_set_level(GPIO_SPI_MOSI, pad_bits & 1);
     gpio_set_level(GPIO_SPI_CLK, 1);
     gpio_set_level(GPIO_SPI_CLK, 0);
